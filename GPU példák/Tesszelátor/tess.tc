@@ -1,0 +1,54 @@
+#version 430
+
+layout(vertices = 4) out;
+
+in vec3 tPosition[];
+out vec3 tcPosition[];
+
+uniform int maxTessLevel;
+uniform int minTessLevel;
+uniform mat4 MVP;
+uniform float th;
+
+void main()
+{
+	float minZ = 0.83;
+	float maxZ = 0.93; //Az intervallum, amely között interpolálunk a felbontás szintjén
+
+	tcPosition[gl_InvocationID] = tPosition[gl_InvocationID];
+	if(gl_InvocationID == 0)
+	{
+		int tessLevel;
+
+		vec4 hpos = MVP * vec4(tPosition[gl_InvocationID], 1.0f);
+		vec3 pos = hpos.xyz / hpos.w;
+
+		float prop = (abs(pos.z) - minZ) / (maxZ - minZ);
+
+		if (maxTessLevel != minTessLevel)
+		{
+			float f = -0.0001;
+			float step = 1.0f / float(maxTessLevel-minTessLevel);
+
+			tessLevel = maxTessLevel;
+
+			while (f < prop)
+			{
+				tessLevel--;
+				f += step;
+			}
+		}
+		else
+		{
+			tessLevel = maxTessLevel;
+		}
+
+		gl_TessLevelInner[0] = tessLevel;
+		gl_TessLevelInner[1] = tessLevel;
+
+		gl_TessLevelOuter[0] = tessLevel;
+		gl_TessLevelOuter[1] = tessLevel;
+		gl_TessLevelOuter[2] = tessLevel;
+		gl_TessLevelOuter[3] = tessLevel;
+	}
+}
